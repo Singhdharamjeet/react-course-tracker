@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript + React.js Progress Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-purple: #818cf8;
+            --accent-green: #34d399;
+            --gradient-primary: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+            --gradient-progress: linear-gradient(90deg, #38bdf8, #818cf8, #34d399);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding-bottom: 60px;
+        }
+
+        /* Glassmorphism Header Bar */
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--card-border);
+            padding: 20px 0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stats-badge {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--card-border);
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .stats-badge span {
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        /* Progress Bar Styling */
+        .progress-wrapper {
+            position: relative;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 14px;
+            background-color: rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--card-border);
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: var(--gradient-progress);
+            border-radius: 20px;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+        }
+
+        .progress-text {
+            position: absolute;
+            right: 0;
+            top: -24px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent-green);
+        }
+
+        /* Main Grid Layout */
+        .main-container {
+            max-width: 1200px;
+            margin: 32px auto 0;
+            padding: 0 24px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        /* Module Card Styling */
+        .module-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 20px;
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .module-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(56, 189, 248, 0.3);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .module-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .module-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .module-count {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+        }
+
+        /* Checklist Items */
+        .checklist {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            padding: 6px 8px;
+            border-radius: 8px;
+            transition: background 0.15s ease;
+        }
+
+        .checklist-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        /* Custom Checkbox Design */
+        .checklist-item input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--text-muted);
+            border-radius: 5px;
+            outline: none;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .checklist-item input[type="checkbox"]:checked {
+            background-color: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        .checklist-item input[type="checkbox"]:checked::after {
+            content: '✓';
+            position: absolute;
+            color: #0f172a;
+            font-size: 12px;
+            font-weight: bold;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .checklist-item label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color 0.2s ease, text-decoration 0.2s ease;
+            user-select: none;
+        }
+
+        .checklist-item input[type="checkbox"]:checked + label {
+            color: rgba(248, 250, 252, 0.4);
+            text-decoration: line-through;
+        }
+    </style>
+</head>
+<body>
+
+<header class="sticky-header">
+    <div class="header-container">
+        <div class="header-top">
+            <h1>JavaScript + React.js Course Tracker</h1>
+            <div class="stats-badge">
+                Progress: <span id="completed-count">0</span> / <span id="total-count">0</span> Items Completed
+            </div>
+        </div>
+        <div class="progress-wrapper">
+            <div class="progress-text" id="progress-text">0%</div>
+            <div class="progress-bar-container">
+                <div id="progress-bar" class="progress-bar"></div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="main-container" id="checklist-container"></main>
+
+<main class="main-container" id="checklist-container"></main>
+
+<script>
+    const courseData = [
+        { module: "Module 1: Web Development Fundamentals", items: ["How the Web Works", "Browser", "Client vs Server", "HTTP/HTTPS", "Request / Response", "REST API basics", "JSON", "DOM basics", "Browser DevTools", "HTML fundamentals", "Semantic HTML", "Forms", "Tables", "Accessibility basics", "CSS fundamentals", "Box Model", "Display", "Position", "Flexbox", "CSS Grid", "Responsive Design", "Media Queries", "CSS animations & transitions", "Modern CSS", "Tailwind CSS basics"] },
+        { module: "Module 2: JavaScript Fundamentals", items: ["What is JavaScript?", "JavaScript Engine", "Variables: var, let, const", "Data Types", "Primitive vs Reference Types", "Strings, Numbers, Boolean", "null and undefined", "typeof", "Operators", "Type coercion", "Truthy / Falsy", "if / else", "switch", "for, while, do-while", "break and continue"] },
+        { module: "Module 3: JavaScript Functions", items: ["Function declaration", "Function expression", "Arrow functions", "Parameters and arguments", "Default parameters", "return", "Callbacks", "Higher-order functions", "Pure functions", "Anonymous functions", "IIFE", "Function scope", "Lexical scope", "Closures", "Recursion"] },
+        { module: "Module 4: Arrays & Objects", items: ["Array creation and access", "push, pop, shift, unshift", "splice and slice", "concat, includes, indexOf", "find and findIndex", "filter, map, reduce", "some and every", "sort, reverse, forEach", "Destructuring", "Spread and Rest", "Objects and properties", "Object methods", "Nested objects", "Object destructuring", "Object.keys / values / entries", "Optional chaining", "Nullish coalescing", "Computed properties"] },
+        { module: "Module 5: Modern JavaScript ES6+", items: ["let / const", "Arrow functions", "Template literals", "Destructuring", "Spread / Rest", "Default parameters", "Modules", "import / export", "Optional chaining", "Nullish coalescing", "Logical assignment", "Set and Map", "WeakMap / WeakSet", "Iterators", "Generators", "Symbols"] },
+        { module: "Module 6: JavaScript DOM", items: ["DOM", "Selecting elements", "querySelector / querySelectorAll", "getElementById", "Creating/removing elements", "Changing text/HTML/styles", "classList", "Events", "Event bubbling", "Event capturing", "Event delegation", "Forms and validation", "LocalStorage", "SessionStorage", "Cookies"] },
+        { module: "Module 7: Asynchronous JavaScript", items: ["Synchronous vs Asynchronous", "Call Stack", "Web APIs", "Callback Queue", "Event Loop", "Callbacks", "Callback Hell", "Promises", "Promise states", "then / catch / finally", "async / await", "try / catch", "Promise.all", "Promise.allSettled", "Promise.race", "Promise.any"] },
+        { module: "Module 8: Fetch API & REST API", items: ["fetch()", "GET/POST/PUT/PATCH / DELETE", "Headers", "Authorization", "Bearer tokens", "JSON request/response", "HTTP status codes", "API error handling", "Loading states", "Pagination", "Search", "Filtering", "Sorting", "Complete API-based application"] },
+        { module: "Module 9: Advanced JavaScript", items: ["Execution context", "Hoisting", "Scope chain", "Closures", "this", "call / apply / bind", "Prototype", "Prototype chain", "Constructor functions", "Classes", "Inheritance", "Encapsulation", "Polymorphism", "Garbage collection", "Memory management", "Debouncing", "Throttling", "Currying", "Memoization"] },
+        { module: "Module 10: Error Handling & Debugging", items: ["Syntax errors", "Runtime errors", "Logical errors", "try / catch", "Custom errors", "Console debugging", "Breakpoints", "Network tab", "Sources tab", "React debugging", "API debugging", "Common frontend errors", "Real debugging exercises"] },
+        { module: "Module 11: NPM & Development Tools", items: ["Node.js introduction", "npm", "package.json", "package-lock.json", "npm install / uninstall / update", "npm scripts", "dependencies / devDependencies", "npx", "Environment variables", ".env", ".gitignore"] },
+        { module: "Module 12: Git & GitHub", items: ["Git and GitHub", "Repository", "init/clone / status", "add/commit/push/pull / fetch", "Branches", "checkout / switch", "merge / rebase", "Merge conflicts", "stash", "reset / revert", "cherry-pick", "remote", "Pull Requests", "Code Review", "Branch strategy"] },
+        { module: "Module 13: React.js Fundamentals", items: ["What is React?", "Why React?", "SPA", "React architecture", "Virtual DOM", "React vs Vanilla JS", "Vite", "Project structure", "Components", "JSX", "Props", "State", "Events", "Conditional rendering", "Lists and keys", "Component composition"] },
+        { module: "Module 14: React Hooks", items: ["useState", "useEffect", "useRef", "useMemo", "useCallback", "useContext", "useReducer", "Custom Hooks"] },
+        { module: "Module 15: React Forms", items: ["Controlled components", "Uncontrolled components", "Form state", "Validation", "Error messages", "Dynamic forms", "File upload", "Multiple file upload", "Reset", "Submission", "React Hook Form", "Zod validation"] },
+        { module: "Module 16: React Routing", items: ["Browser Router", "Routes", "Route", "Link", "NavLink", "useNavigate", "useParams", "useLocation", "Nested routes", "Protected routes", "Role-based routes", "404 page"] },
+        { module: "Module 17: State Management", items: ["Local state", "Prop drilling", "Context API", "useReducer", "Redux", "Redux Toolkit", "Zustand", "Store", "Slice", "Reducer", "Action", "Dispatch", "Selector", "Async thunk", "API state"] },
+        { module: "Module 18: API Integration in React", items: ["API service architecture", "Axios", "Fetch", "Interceptors", "Authentication token", "Refresh token", "Error handling", "Loading / Empty states", "Pagination", "Search", "Filtering", "Sorting", "CRUD operations"] },
+        { module: "Module 19: Authentication", items: ["Login", "Register", "JWT", "Access token", "Refresh token", "Logout", "Protected routes", "Role-based access", "Admin / Manager / Employee", "Token expiration", "Unauthorized handling"] },
+        { module: "Module 20: UI & Design", items: ["Responsive UI", "Mobile-first design", "Tailwind CSS", "Material UI", "Component libraries", "Modals", "Dropdowns", "Tables", "Cards", "Tabs", "Pagination", "Toast notifications", "Loading skeletons", "Empty states", "Dark mode", "Accessibility"] },
+        { module: "Module 21: Real-World CRM Project", items: ["Login", "Dashboard", "Leads", "Customers", "Contacts", "Companies", "Products", "Quotes", "Orders", "Tasks", "Calendar", "Notes", "Activities", "Search", "Filters", "Pagination", "User management", "Role management", "Reports", "Notifications", "Profile", "Settings"] },
+        { module: "Module 22: Performance Optimization", items: ["React rendering", "Re-render", "React.memo", "useMemo", "useCallback", "Lazy loading", "Code splitting", "Suspense", "Image optimization", "Bundle optimization", "Network optimization", "Debouncing", "Virtualization", "Performance profiling"] },
+        { module: "Module 23: Testing", items: ["Unit testing", "Integration testing", "Component testing", "Vitest", "React Testing Library", "API mocking", "Test coverage", "Write tests for CRM project"] },
+        { module: "Module 24: Security", items: ["XSS", "CSRF", "CORS", "JWT security", "Token storage", "Sensitive data", "Environment variables", "Dependency vulnerabilities", "Input validation", "Secure API communication"] },
+        { module: "Module 25: Deployment", items: ["Production build", "npm run build", "Environment variables", "Vercel", "Netlify", "Custom domain", "HTTPS", "Frontend/backend connection", "CORS production setup", "Deployment debugging"] },
+        { module: "Module 26: Interview Preparation", items: ["100 JavaScript interview questions", "100 React interview questions", "50 HTML/CSS questions", "50 Git/GitHub questions", "50 API questions", "Simple answer + detailed answer + code example + real-world explanation"] },
+        { module: "Module 27: Coding Challenges", items: ["50 JavaScript coding problems", "50 React coding problems", "Beginner / Intermediate / Advanced", "Arrays, Objects, Strings, Functions, Promises, Async/Await, DOM, Algorithms, React state, Hooks, API, Forms, Performance"] },
+        { module: "Module 28: Final Project: Career Management / CRM System", items: ["Authentication", "Dashboard", "Leads", "Students", "Customers", "Courses", "Batches", "Enrollment", "Payments", "Tasks", "Calls", "Reports", "Notifications", "User Management", "Settings", "React + Vite + JS + Redux Toolkit + React Router + Axios + React Hook Form + Zod + Tailwind CSS + REST APIs + JWT + Role-based access"] }
+    ];
+
+    const container = document.getElementById('checklist-container');
+    let totalItems = 0;
+
+    // Render Modules
+    courseData.forEach((mod, modIdx) => {
+        const modDiv = document.createElement('div');
+        modDiv.className = 'module-card';
+        
+        let itemsHtml = '';
+        mod.items.forEach((item, itemIdx) => {
+            totalItems++;
+            const id = `item-${modIdx}-${itemIdx}`;
+            // Load saved state from LocalStorage
+            const isChecked = localStorage.getItem(id) === 'true' ? 'checked' : '';
+            
+            itemsHtml += `
+                <li class="checklist-item">
+                    <input type="checkbox" id="${id}" class="course-item" ${isChecked} onchange="updateProgress('${id}')">
+                    <label for="${id}">${item}</label>
+                </li>
+            `;
+        });
+
+        modDiv.innerHTML = `
+            <div class="module-header">
+                <div class="module-title">${mod.module}</div>
+                <div class="module-count">${mod.items.length} Topics</div>
+            </div>
+            <ul class="checklist">${itemsHtml}</ul>
+        `;
+        container.appendChild(modDiv);
+    });
+
+    document.getElementById('total-count').innerText = totalItems;
+    updateProgress(); // Calculate initial state on page load
+
+    // Update Overall Progress & Save to LocalStorage
+    function updateProgress(changedId) {
+        if (changedId) {
+            const checkbox = document.getElementById(changedId);
+            localStorage.setItem(changedId, checkbox.checked);
+        }
+
+        const checked = document.querySelectorAll('.course-item:checked').length;
+        const percentage = Math.round((checked / totalItems) * 100);
+        
+        document.getElementById('completed-count').innerText = checked;
+        document.getElementById('progress-text').innerText = percentage + '%';
+        
+        const progressBar = document.getElementById('progress-bar');
+        progressBar.style.width = percentage + '%';
+    }
+</script>
+</body>
+</html>
+</body>
+</html>
